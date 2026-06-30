@@ -6,54 +6,71 @@
 //
 
 import SwiftUI
-import SwiftData
+
+let width = 450.0
+let height = 250.0
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @AppStorage("location") private var location = "tb"
+    @AppStorage("scale") private var scale: Double = 1.0
+    @AppStorage("autoRestartDock") private var autoRestartDock = true
+    
+    @State private var showInfoLocation = false
+    @State private var showInfoScale = false
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        VStack {
+            Text("MagnificationScaler").font(.title)
+            Text("V. \(version) by Calebh101").font(.body)
+            Spacer().frame(height: 20)
+            HStack {
+                Picker("Dock location:", selection: $location) {
+                    Text("Bottom").tag("tb")
+                    Text("Side").tag("lr")
+                }.pickerStyle(.menu)
+                Button {
+                    showInfoLocation.toggle()
+                } label: {
+                    Image(systemName: "info.circle")
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showInfoLocation) {
+                    Text("The app uses the dock's current width or height to apply magnification scaling.\n\nIf your dock is at the bottom of your screen, the height will be the magnification factor.\nIf your dock is at the side of your screen, the width will be the magnification factor.\n\nThis setting should reflect your actual dock; changing it will not change your settings.")
+                        .padding().frame(width: 400)
+                }
+            }
+            Spacer().frame(height: 20)
+            HStack {
+                Text("Scale: \(scale, specifier: "%.1f")")
+                Slider(value: $scale, in: 0.1...2.0, step: 0.1)
+                Button {
+                    showInfoScale.toggle()
+                } label: {
+                    Image(systemName: "info.circle")
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showInfoScale) {
+                    Text("The proportion to your dock's height/width to the magnification set.\n1.0 is the default, and correlates to medium magnification.")
+                        .padding().frame(width: 400)
+                }
+            }
+            Spacer().frame(height: 20)
+            Toggle("Auto-Restart Dock", isOn: $autoRestartDock)
+            Spacer().frame(height: 10)
+            HStack {
+                Button("Quit") { NSApplication.shared.terminate(nil) }
+                Button("Apply") {
+                    if let size = getDockSize() {
+                        setDock(size: size, override: true)
                     }
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-            .toolbar {
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+                Button("Restart Dock") { restartDock() }
             }
         }
+        .padding()
     }
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+    ContentView().frame(width: width, height: height)
 }
