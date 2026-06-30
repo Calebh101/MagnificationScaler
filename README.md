@@ -22,3 +22,9 @@ The caveat is that there is a small flicker when the dock restarts.
 - Apply: Apply the settings you set and restart the dock (if Auto-Restart Dock is enabled).
 - Restart Dock: Same as running `killall dock`.
 - Quit: Quit MagnificationScaler.
+
+## Video
+
+This video shows how the app will automatically restart the dock. Notice the before and after of each restart.
+
+[![Demo](./assets/videos/1.gif)](./assets/videos/1.mov)
