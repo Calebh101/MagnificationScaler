@@ -1,15 +1,32 @@
 {
   "fill" : {
-    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+    "linear-gradient" : [
+      "srgb:0.19909,0.47763,0.69480,1.00000",
+      "srgb:0.18087,0.37777,0.79235,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 0
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0.7
+      }
+    }
   },
   "groups" : [
     {
       "layers" : [
         {
-          "image-name" : "Image.svg",
-          "name" : "Image",
+          "blend-mode" : "normal",
+          "fill" : "none",
+          "glass" : true,
+          "image-name" : "Image 5.svg",
+          "name" : "Image 5",
+          "opacity" : 1,
           "position" : {
-            "scale" : 6.52,
+            "scale" : 6.65,
             "translation-in-points" : [
               0,
               0
@@ -21,6 +38,7 @@
         "kind" : "neutral",
         "opacity" : 0.5
       },
+      "specular" : false,
       "translucency" : {
         "enabled" : true,
         "value" : 0.5
