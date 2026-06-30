@@ -11,10 +11,18 @@ import SwiftData
 let version = "0.0.0A"
 let previous = PreviousValue()
 
+class MSSettings {
+    @AppStorage("location") static public var location = "tb"
+    @AppStorage("scale") static public var scale: Double = 1.0
+    @AppStorage("autoRestartDock") static public var autoRestartDock = true
+    @AppStorage("enableMagnification") static public var enableMagnification = true
+}
+
 func setDock(size: CGSize, override: Bool = false) {
-    let scale = UserDefaults.standard.double(forKey: "scale")
-    let location = UserDefaults.standard.string(forKey: "location") ?? "tb"
-    let autoRestartDock = UserDefaults.standard.bool(forKey: "autoRestartDock")
+    let enableMagnification = MSSettings.enableMagnification
+    let scale = MSSettings.scale
+    let location = MSSettings.location
+    let autoRestartDock = MSSettings.autoRestartDock
     
     let factor = location == "tb" ? size.height : size.width
     if !override && factor == previous.value { return }
@@ -23,15 +31,12 @@ func setDock(size: CGSize, override: Bool = false) {
     let dockDefaults = UserDefaults(suiteName: "com.apple.dock")!
     let results = factor * scale
 
-    dockDefaults.set(true, forKey: "magnification")
+    dockDefaults.set(enableMagnification, forKey: "magnification")
     dockDefaults.set(results, forKey: "largesize")
     dockDefaults.synchronize()
 
     if autoRestartDock {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
-        task.arguments = ["Dock"]
-        try? task.run()
+        restartDock()
     }
     
     let isEnabled = dockDefaults.bool(forKey: "magnification")
@@ -64,7 +69,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var popover: NSPopover!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        checkAccessibilityPermission()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         
         if let button = statusItem.button {
@@ -84,7 +88,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             await monitor.start({ size in
                 setDock(size: size)
-            }, sendInitialValue: true)
+            })
         }
     }
 

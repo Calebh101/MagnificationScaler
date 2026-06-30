@@ -25,6 +25,7 @@ func getDockSize() -> CGSize? {
     var ref: CFTypeRef?
     let e = AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &ref)
 
+    // Get the dock's UI elements
     guard e == .success, let children = ref as? [AXUIElement] else {
         print("Couldn't get children:", e.rawValue)
         return nil
@@ -34,6 +35,7 @@ func getDockSize() -> CGSize? {
         var ref: CFTypeRef?
         AXUIElementCopyAttributeValue(child, kAXRoleAttribute as CFString, &ref)
 
+        // Check if list element
         if (ref as? String) == kAXListRole {
             var ref: CFTypeRef?
             let e = AXUIElementCopyAttributeValue(child, kAXSizeAttribute as CFString, &ref)
@@ -62,8 +64,8 @@ actor DockMonitor {
     private var lastSeenSize: CGSize?
     private var stableSince: Date?
 
-    func start(_ callback: @escaping @Sendable (CGSize) -> Void, sendInitialValue: Bool = false) {
-        if sendInitialValue, let size = getDockSize() {
+    func start(_ callback: @escaping @Sendable (CGSize) -> Void) {
+        if let size = getDockSize() {
             callback(size)
         }
 
@@ -73,12 +75,13 @@ actor DockMonitor {
                     if size != lastSeenSize {
                         lastSeenSize = size
                         stableSince = Date()
-                    } else if let since = stableSince, Date().timeIntervalSince(since) >= 0.5 {
+                    } else if let since = stableSince, Date().timeIntervalSince(since) >= 0.5 { // 0.5s
                         callback(size)
                         stableSince = nil
                     }
                 }
-                try? await Task.sleep(nanoseconds: 300_000_000)
+                
+                try? await Task.sleep(nanoseconds: 300_000_000) // 0.3s
             }
         }
     }
