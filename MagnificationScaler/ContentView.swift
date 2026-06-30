@@ -7,17 +7,22 @@
 
 import SwiftUI
 
-let width = 450.0
-let height = 250.0
+let width = 500.0
+let height = 350.0
 
 struct ContentView: View {
     @AppStorage("location") private var location = "tb"
     @AppStorage("scale") private var scale: Double = 1.0
+    @AppStorage("factorChangeThreshold") public var factorChangeThreshold: Double = 1.0
     @AppStorage("autoRestartDock") private var autoRestartDock = true
     @AppStorage("enableMagnification") private var enableMagnification = true
     
+    @State private var dockSizeText = ""
+    
     @State private var showInfoLocation = false
     @State private var showInfoScale = false
+    @State private var showInfoThreshold = false
+    @State private var showDockSize = false
     
     var body: some View {
         VStack {
@@ -39,6 +44,32 @@ struct ContentView: View {
                 }
             }
             Spacer().frame(height: 20)
+            HStack {
+                Text("\(location == "tb" ? "Height" : "Width)") change threshold:")
+                TextField("Pixels", value: $factorChangeThreshold, format: .number)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .frame(width: 60)
+                    .onChange(of: factorChangeThreshold) { old, new in
+                        let min = 1.0
+                        let max = 999.0
+
+                        if new < min {
+                            factorChangeThreshold = min
+                        } else if new > max {
+                            factorChangeThreshold = max
+                        }
+                    }
+                Button {
+                    showInfoThreshold.toggle()
+                } label: {
+                    Image(systemName: "info.circle")
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showInfoThreshold) {
+                    Text("How many pixels the dock's \(location == "tb" ? "height" : "width)") has to change to automatically restart the dock.\nThis is only applicable if Auto-Restart Dock is on.\n\nUse Get Dock Size below to show your dock's current \(location == "tb" ? "height" : "width)").")
+                        .padding().frame(width: 400)
+                }
+            }
             HStack {
                 Picker("Dock location:", selection: $location) {
                     Text("Bottom").tag("tb")
@@ -66,6 +97,22 @@ struct ContentView: View {
                     }
                 }
                 Button("Restart Dock") { restartDock() }
+            }
+            HStack {
+                Button("Get Dock Size") {
+                    if let size = getDockSize() {
+                        dockSizeText = "width x height:\n\(size.width)px x \(size.height)px"
+                    } else {
+                        dockSizeText = "Unavailable"
+                    }
+                    
+                    showDockSize = true
+                }
+                .alert("Dock Size", isPresented: $showDockSize) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text(dockSizeText)
+                }
                 Button("Quit") { NSApplication.shared.terminate(nil) }
             }
         }

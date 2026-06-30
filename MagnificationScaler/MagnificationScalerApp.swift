@@ -8,12 +8,13 @@
 import SwiftUI
 import SwiftData
 
-let version = "0.0.0A"
+let version = "0.0.0B"
 let previous = PreviousValue()
 
 class MSSettings {
     @AppStorage("location") static public var location = "tb"
     @AppStorage("scale") static public var scale: Double = 1.0
+    @AppStorage("factorChangeThreshold") static public var factorChangeThreshold: Double = 1.0
     @AppStorage("autoRestartDock") static public var autoRestartDock = true
     @AppStorage("enableMagnification") static public var enableMagnification = true
 }
@@ -23,9 +24,12 @@ func setDock(size: CGSize, override: Bool = false) {
     let scale = MSSettings.scale
     let location = MSSettings.location
     let autoRestartDock = MSSettings.autoRestartDock
+    let threshold = MSSettings.factorChangeThreshold
     
     let factor = location == "tb" ? size.height : size.width
-    if !override && factor == previous.value { return }
+    let diff = abs(Double(factor) - Double(previous.value))
+
+    if !override && diff == 0 { return }
     previous.value = factor
 
     let dockDefaults = UserDefaults(suiteName: "com.apple.dock")!
@@ -35,7 +39,7 @@ func setDock(size: CGSize, override: Bool = false) {
     dockDefaults.set(results, forKey: "largesize")
     dockDefaults.synchronize()
 
-    if autoRestartDock {
+    if autoRestartDock && (override || diff >= threshold) {
         restartDock()
     }
     
@@ -78,8 +82,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         popover = NSPopover()
-        popover.contentSize = NSSize(width: width, height: height)
         popover.behavior = .transient
+        
+        if !checkAccessibilityPermission() {
+            popover.contentSize = NSSize(width: NoPermsView.width, height: NoPermsView.height)
+            popover.contentViewController = NSHostingController(rootView: NoPermsView())
+            return
+        }
+        
+        popover.contentSize = NSSize(width: width, height: height)
         popover.contentViewController = NSHostingController(rootView: ContentView())
         
         print("Monitor is starting")
