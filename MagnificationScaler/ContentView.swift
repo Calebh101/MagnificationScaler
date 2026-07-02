@@ -11,7 +11,6 @@ let width = 500.0
 let height = 350.0
 
 struct ContentView: View {
-    @AppStorage("location") private var location = "tb"
     @AppStorage("scale") private var scale: Double = 1.0
     @AppStorage("factorChangeThreshold") public var factorChangeThreshold: Double = 1.0
     @AppStorage("autoRestartDock") private var autoRestartDock = true
@@ -45,7 +44,7 @@ struct ContentView: View {
             }
             Spacer().frame(height: 20)
             HStack {
-                Text("\(location == "tb" ? "Height" : "Width)") change threshold:")
+                Text("Height/width change threshold:")
                 TextField("Pixels", value: $factorChangeThreshold, format: .number)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .frame(width: 60)
@@ -66,11 +65,11 @@ struct ContentView: View {
                 }
                 .buttonStyle(.plain)
                 .popover(isPresented: $showInfoThreshold) {
-                    Text("How many pixels the dock's \(location == "tb" ? "height" : "width)") has to change to automatically restart the dock.\nThis is only applicable if Auto-Restart Dock is on.\n\nUse Get Dock Size below to show your dock's current \(location == "tb" ? "height" : "width)").")
+                    Text("How many pixels the dock's Height/width has to change to automatically restart the dock.\nThis is only applicable if Auto-Restart Dock is on.\n\nUse Get Dock Size below to show your dock's current Height/width.")
                         .padding().frame(width: 400)
                 }
             }
-            HStack {
+            /*HStack {
                 Picker("Dock location:", selection: $location) {
                     Text("Bottom").tag("tb")
                     Text("Side").tag("lr")
@@ -85,7 +84,7 @@ struct ContentView: View {
                     Text("The app uses the dock's current width or height to apply magnification scaling.\n\nIf your dock is at the bottom of your screen, the height will be the magnification factor.\nIf your dock is at the side of your screen, the width will be the magnification factor.\n\nThis setting should reflect your actual dock; changing it will not change your settings.")
                         .padding().frame(width: 400)
                 }
-            }
+            }*/
             Spacer().frame(height: 20)
             Toggle("Enable Magnification", isOn: $enableMagnification)
             Toggle("Auto-Restart Dock", isOn: $autoRestartDock)
@@ -99,13 +98,23 @@ struct ContentView: View {
                 Button("Restart Dock") { restartDock() }
             }
             HStack {
-                Button("Get Dock Size") {
+                Button("Dock Info") {
+                    var sizeText: String
+                    var orienText: String
+                    
                     if let size = getDockSize() {
-                        dockSizeText = "width x height:\n\(size.width)px x \(size.height)px"
+                        sizeText = "\(size.width)px x \(size.height)px";
                     } else {
-                        dockSizeText = "Unavailable"
+                        sizeText = "Unavailable"
                     }
                     
+                    if let orientation = getDockOrientation() {
+                        orienText = orientation.name()
+                    } else {
+                        orienText = "Unavailable (defaults to \(DockOrientation.bottom.name())"
+                    }
+                    
+                    dockSizeText = "Size (wxh): \(sizeText)\nOrientation: \(orienText)"
                     showDockSize = true
                 }
                 .alert("Dock Size", isPresented: $showDockSize) {

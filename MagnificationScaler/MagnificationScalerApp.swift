@@ -8,11 +8,30 @@
 import SwiftUI
 import SwiftData
 
-let version = "0.0.0B"
+let version = "0.0.0C"
 let previous = PreviousValue()
 
+enum DockOrientation: String {
+    case left
+    case right
+    case bottom
+    
+    func name() -> String {
+        switch self {
+            case .bottom: return "Bottom"
+            case .left: return "Left"
+            case .right: return "Right"
+        }
+    }
+}
+
+func getDockOrientation() -> DockOrientation? {
+    return UserDefaults(suiteName: "com.apple.dock")?
+        .string(forKey: "orientation")
+        .flatMap(DockOrientation.init(rawValue:))
+}
+
 class MSSettings {
-    @AppStorage("location") static public var location = "tb"
     @AppStorage("scale") static public var scale: Double = 1.0
     @AppStorage("factorChangeThreshold") static public var factorChangeThreshold: Double = 1.0
     @AppStorage("autoRestartDock") static public var autoRestartDock = true
@@ -22,11 +41,11 @@ class MSSettings {
 func setDock(size: CGSize, override: Bool = false) {
     let enableMagnification = MSSettings.enableMagnification
     let scale = MSSettings.scale
-    let location = MSSettings.location
     let autoRestartDock = MSSettings.autoRestartDock
     let threshold = MSSettings.factorChangeThreshold
+    let location = getDockOrientation() ?? .bottom
     
-    let factor = location == "tb" ? size.height : size.width
+    let factor = location == .bottom ? size.height : size.width
     let diff = abs(Double(factor) - Double(previous.value))
 
     if !override && diff == 0 { return }
