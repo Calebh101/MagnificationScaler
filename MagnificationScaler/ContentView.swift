@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ServiceManagement
 
 let width = 500.0
 let height = 350.0
@@ -16,7 +17,8 @@ struct ContentView: View {
     @AppStorage("autoRestartDock") private var autoRestartDock = true
     @AppStorage("enableMagnification") private var enableMagnification = true
     
-    @State private var dockSizeText = ""
+    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var dockSizeText = "Unavailable"
     
     @State private var showInfoLocation = false
     @State private var showInfoScale = false
@@ -38,7 +40,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.plain)
                 .popover(isPresented: $showInfoScale) {
-                    Text("The proportion to your dock's height/width to the magnification set.\n1.0 is the default, and correlates to medium magnification.")
+                    Text("The proportion of your dock's height/width to the magnification set.\n1.0 is the default, and correlates to medium magnification.")
                         .padding().frame(width: 400)
                 }
             }
@@ -88,6 +90,18 @@ struct ContentView: View {
             Spacer().frame(height: 20)
             Toggle("Enable Magnification", isOn: $enableMagnification)
             Toggle("Auto-Restart Dock", isOn: $autoRestartDock)
+            Toggle("Launch at Login", isOn: $launchAtLogin)
+                .onChange(of: launchAtLogin) { old, new in
+                    do {
+                        if new {
+                            try SMAppService.mainApp.register()
+                        } else {
+                            try SMAppService.mainApp.unregister()
+                        }
+                    } catch {
+                        print("Failed: \(error)")
+                    }
+                }
             Spacer().frame(height: 20)
             HStack {
                 Button("Apply") {

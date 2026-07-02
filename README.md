@@ -24,6 +24,7 @@ The caveat is that there is a small flicker when the dock restarts.
 <!-- Dock location: The app needs to know this, so it knows whether to use the width or the height of the dock as its factor. Click the Info button to learn more.-->
 - Enable Magnification: Whether to enable magnification. Turning this off doesn't disable the app's functionality; it just tells macOS to not use magnification. If you turn this off, you should also probably turn off Auto-Restart Dock.
 - Auto-Restart Dock: To restart the dock automatically on size changes. If this is disabled, then it just skips restarting the dock, and you'll have to do this manually. The preferences will still be set.
+- Launch at Login: Start MagnificationScaler when you log in. This might cause a dock flicker when logging in.
 
 ## Buttons
 

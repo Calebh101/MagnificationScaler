@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-let version = "0.0.0C"
+let version = "0.0.0D"
 let previous = PreviousValue()
 
 enum DockOrientation: String {
