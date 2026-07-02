@@ -7,6 +7,8 @@
 
 import SwiftUI
 import SwiftData
+import Foundation
+import ApplicationServices
 
 let version = "0.0.0D"
 let previous = PreviousValue()
@@ -31,18 +33,20 @@ func getDockOrientation() -> DockOrientation? {
         .flatMap(DockOrientation.init(rawValue:))
 }
 
+func mapRange(_ value: Double, inMin: Double, inMax: Double, outMin: Double, outMax: Double) -> Double {
+    let clamped = min(max(value, inMin), inMax)
+    let normalized = (clamped - inMin) / (inMax - inMin)
+    return outMin + normalized * (outMax - outMin)
+}
+
 class MSSettings {
     @AppStorage("scale") static public var scale: Double = 1.0
-    @AppStorage("factorChangeThreshold") static public var factorChangeThreshold: Double = 1.0
-    @AppStorage("autoRestartDock") static public var autoRestartDock = true
     @AppStorage("enableMagnification") static public var enableMagnification = true
 }
 
 func setDock(size: CGSize, override: Bool = false) {
     let enableMagnification = MSSettings.enableMagnification
     let scale = MSSettings.scale
-    let autoRestartDock = MSSettings.autoRestartDock
-    let threshold = MSSettings.factorChangeThreshold
     let location = getDockOrientation() ?? .bottom
     
     let factor = location == .bottom ? size.height : size.width
@@ -52,19 +56,32 @@ func setDock(size: CGSize, override: Bool = false) {
     previous.value = factor
 
     let dockDefaults = UserDefaults(suiteName: "com.apple.dock")!
-    let results = factor * scale
+    let results = mapRange(Double(factor), inMin: 50, inMax: 250, outMin: 0.25, outMax: 2) * scale
 
     dockDefaults.set(enableMagnification, forKey: "magnification")
     dockDefaults.set(results, forKey: "largesize")
     dockDefaults.synchronize()
+    
+    let source = """
+    tell application "System Events"
+        tell dock preferences
+            set properties to {magnification:\(enableMagnification), magnification size:\(results)}
+        end tell
+    end tell
+    """
 
-    if autoRestartDock && (override || diff >= threshold) {
-        restartDock()
+    if let script = NSAppleScript(source: source) {
+        var error: NSDictionary?
+        let result = script.executeAndReturnError(&error)
+        
+        if let error = error {
+            print("Error: \(error)")
+        } else {
+            print("Result: \(result.stringValue ?? "no value")")
+        }
     }
     
-    let isEnabled = dockDefaults.bool(forKey: "magnification")
-    let dockSize = dockDefaults.double(forKey: "largesize")
-    print("Set dock magnification:", factor, scale, results, dockSize, isEnabled, location, autoRestartDock)
+    print("Set dock magnification:", factor, scale, results, location)
 }
 
 final class PreviousValue: @unchecked Sendable {

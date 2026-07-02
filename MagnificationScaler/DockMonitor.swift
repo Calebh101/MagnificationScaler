@@ -62,7 +62,6 @@ actor DockMonitor {
     private var launchObserver: NSObjectProtocol?
     private var pollTask: Task<Void, Never>?
     private var lastSeenSize: CGSize?
-    private var stableSince: Date?
 
     func start(_ callback: @escaping @Sendable (CGSize) -> Void) {
         if let size = getDockSize() {
@@ -74,10 +73,8 @@ actor DockMonitor {
                 if let size = getDockSize() {
                     if size != lastSeenSize {
                         lastSeenSize = size
-                        stableSince = Date()
-                    } else if let since = stableSince, Date().timeIntervalSince(since) >= 0.5 { // 0.5s
+                    } else { // 0.5s
                         callback(size)
-                        stableSince = nil
                     }
                 }
                 
